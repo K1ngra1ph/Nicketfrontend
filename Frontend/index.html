@@ -70,6 +70,9 @@
 </div>
 
 <script>
+  // ✅ Global backend URL for Vercel
+  const BACKEND_URL = "https://nicketbackend.onrender.com";
+
   const overlay = document.getElementById('winGameOverlay');
   const openBtn = document.getElementById('openWinGame');
   const closeBtn = document.getElementById('closeWinGame');
@@ -158,7 +161,6 @@
   cancelBtn.onclick = () => confirmOverlay.style.display = 'none';
   confirmOverlay.onclick = (e) => { if (e.target === confirmOverlay) confirmOverlay.style.display = 'none'; };
 
-  // ✅ Fetch call to Render backend on Confirm click
   confirmBtn.onclick = async () => {
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -174,7 +176,7 @@
     confirmOverlay.style.display = "none";
 
     try {
-      const response = await fetch("https://nicketbackend.onrender.com/submit", {
+      const response = await fetch(`${BACKEND_URL}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, phone, eventValue, selectedNumbers, totalValue })
@@ -206,4 +208,3 @@
 
 </body>
 </html>
-
