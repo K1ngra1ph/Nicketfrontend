@@ -189,7 +189,7 @@
       const result = await response.json();
 
       if (response.ok) {
-        alert(`✅ ${result.message || "Submission successful!"}`);
+          alert(`✅ Thank you, ${name}! Your registration has been received. A confirmation email has been sent to ${email}.`);
         confirmOverlay.style.display = "none";
         selectedNumbers = [];
         updateTotals();
