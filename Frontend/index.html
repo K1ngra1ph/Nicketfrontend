@@ -8,6 +8,26 @@
     body { font-family: 'Poppins', sans-serif; background: #f9fafb; padding: 20px; }
     .form-container { background: white; padding: 25px; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Toast styles */
+    #toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #16a34a;
+      color: white;
+      text-align: center;
+      border-radius: 8px;
+      padding: 12px;
+      position: fixed;
+      z-index: 10000;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      font-weight: 500;
+      transition: all 0.4s ease;
+    }
+    #toast.show { visibility: visible; bottom: 60px; opacity: 1; }
   </style>
 </head>
 <body>
@@ -42,20 +62,8 @@
   </div>
 </div>
 
-<!-- Win Game Overlay -->
-<div id="winGameOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; overflow-y:auto; backdrop-filter:blur(3px);">
-  <div id="winGameModal" style="background:white; border-radius:16px; padding:30px; width:80%; max-width:900px; height:50vh; margin:60px auto; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative; display:flex; flex-direction:column; overflow-y:auto;">
-    <button id="closeWinGame" style="position:absolute; top:15px; right:20px; background:none; color:#1e293b; border:none; font-size:20px; font-weight:bold; cursor:pointer;">✖</button>
-    <h2 style="text-align:center; color:#1e293b;">Pick Your Numbers</h2>
-    <p style="text-align:center; color:#64748b;">Each number costs ₦1,000</p>
-    <div id="winGameGrid" style="display:grid; grid-template-columns:repeat(10,1fr); gap:8px; margin-top:20px; justify-items:center;"></div>
-    <div style="text-align:center; margin-top:25px; font-size:1.1rem;">Total: ₦<span id="winGameTotal">0</span></div>
-    <div style="text-align:center; margin-top:20px;">
-      <button id="clearWinGame" style="background:#facc15; color:#1e293b; border:none; border-radius:8px; padding:10px 25px; font-size:0.95rem; font-weight:600; cursor:pointer; margin-right:10px;">Clear All Selections</button>
-      <button id="submitWinGame" style="background:#ef4444; color:white; border:none; border-radius:8px; padding:10px 25px; font-size:0.95rem; cursor:pointer; font-weight:600;">Submit</button>
-    </div>
-  </div>
-</div>
+<!-- Toast Notification -->
+<div id="toast"></div>
 
 <!-- Confirmation Overlay -->
 <div id="confirmOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;">
@@ -71,100 +79,61 @@
 
 <script>
   const BACKEND_URL = "https://nicketbackend.onrender.com";
-  const overlay = document.getElementById('winGameOverlay');
-  const openBtn = document.getElementById('openWinGame');
-  const closeBtn = document.getElementById('closeWinGame');
-  const grid = document.getElementById('winGameGrid');
-  const totalEl = document.getElementById('winGameTotal');
-  const submitBtnGame = document.getElementById('submitWinGame');
-  const clearBtn = document.getElementById('clearWinGame');
-  const selectedDisplay = document.getElementById('selectedDisplay');
   const pricePerNumber = 1000;
   let selectedNumbers = [];
 
-  openBtn.onclick = () => overlay.style.display = 'block';
-  closeBtn.onclick = () => overlay.style.display = 'none';
-  overlay.onclick = (e) => { if (e.target === overlay) overlay.style.display = 'none'; };
-
-  // Generate number buttons dynamically
-  for (let i = 1; i <= 100; i++) {
-    const btn = document.createElement('button');
-    btn.textContent = i;
-    btn.className = 'winGameBtn';
-    btn.style.cssText = "width:50px; height:50px; border:2px solid #cbd5e1; border-radius:8px; background:#fff; cursor:pointer; font-weight:600; transition:all 0.2s; position:relative;";
-    const badge = document.createElement('span');
-    badge.style.cssText = "position:absolute; bottom:4px; right:6px; font-size:10px; background:#ef4444; color:white; border-radius:50%; padding:2px 5px; display:none;";
-    btn.appendChild(badge);
-    btn.onclick = () => {
-      selectedNumbers.push(i);
-      badge.textContent = selectedNumbers.filter(n => n === i).length;
-      badge.style.display = 'inline';
-      btn.style.background = '#ef4444';
-      btn.style.color = 'white';
-      btn.style.borderColor = '#ef4444';
-      updateTotals();
-    };
-    grid.appendChild(btn);
-  }
-
-  function updateTotals() {
-    totalEl.textContent = selectedNumbers.length * pricePerNumber;
-    selectedDisplay.textContent = selectedNumbers.length === 0 ? "No numbers selected yet." : "Selected Numbers: " + selectedNumbers.join(", ");
-  }
-
-  clearBtn.onclick = () => {
-    selectedNumbers = [];
-    updateTotals();
-    grid.querySelectorAll('button.winGameBtn').forEach(btn => {
-      btn.style.background = '#fff';
-      btn.style.color = '#1e293b';
-      btn.style.borderColor = '#cbd5e1';
-      const badge = btn.querySelector('span');
-      badge.style.display = 'none';
-      badge.textContent = '';
-    });
-  };
-
-  submitBtnGame.onclick = () => {
-    if (selectedNumbers.length === 0) return alert('Please select at least one number.');
-    overlay.style.display = 'none';
-  };
-
-  // Confirmation overlay logic
-  const submitBtn = document.getElementById('submitBtn');
-  const confirmOverlay = document.getElementById('confirmOverlay');
-  const confirmText = document.getElementById('confirmText');
+  const overlay = document.getElementById('confirmOverlay');
   const confirmBtn = document.getElementById('confirmBtn');
   const cancelBtn = document.getElementById('cancelBtn');
+  const confirmText = document.getElementById('confirmText');
+  const submitBtn = document.getElementById('submitBtn');
+  const toast = document.getElementById("toast");
 
-  submitBtn.addEventListener('click', () => {
+  function showToast(message, success = true) {
+    toast.textContent = message;
+    toast.style.backgroundColor = success ? "#16a34a" : "#ef4444";
+    toast.className = "show";
+    setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+  }
+
+  function clearForm() {
+    document.getElementById('name').value = "";
+    document.getElementById('email').value = "";
+    document.getElementById('phone').value = "";
+    document.getElementById('event').value = "";
+    selectedNumbers = [];
+    document.getElementById("selectedDisplay").textContent = "No numbers selected yet.";
+  }
+
+  submitBtn.addEventListener("click", () => {
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const eventValue = document.getElementById('event').value.trim();
+
     if (!name || !email || !phone || !eventValue || selectedNumbers.length === 0) {
-      alert('⚠️ Please fill in all required fields and select numbers.');
+      showToast("⚠️ Please fill all fields and select numbers.", false);
       return;
     }
+
     confirmText.innerHTML = `
       <strong>Name:</strong> ${name}<br>
       <strong>Email:</strong> ${email}<br>
       <strong>Phone:</strong> ${phone}<br>
       <strong>Event:</strong> ${eventValue}<br>
       <strong>Selected Numbers:</strong> ${selectedNumbers.join(", ")}<br>
-      <strong>Total Value:</strong> ₦${(selectedNumbers.length * pricePerNumber).toLocaleString()}<br><br>
-      Please confirm that all the information above is correct.
+      <strong>Total:</strong> ₦${(selectedNumbers.length * pricePerNumber).toLocaleString()}<br><br>
+      Please confirm all details are correct.
     `;
-    confirmOverlay.style.display = 'flex';
+    overlay.style.display = "flex";
   });
 
-  cancelBtn.onclick = () => confirmOverlay.style.display = 'none';
-  confirmOverlay.onclick = (e) => { if (e.target === confirmOverlay) confirmOverlay.style.display = 'none'; };
+  cancelBtn.onclick = () => overlay.style.display = "none";
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.style.display = "none"; };
 
-  // ✅ Confirm button functionality (with disable)
   confirmBtn.addEventListener("click", async () => {
     confirmBtn.disabled = true;
-    confirmBtn.textContent = "Processing...";
+    confirmBtn.textContent = "Sending...";
 
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -172,15 +141,8 @@
     const eventValue = document.getElementById('event').value.trim();
     const totalValue = selectedNumbers.length * pricePerNumber;
 
-    if (!name || !email || !phone || !eventValue || selectedNumbers.length === 0) {
-      alert("Please fill in all fields and select your numbers before confirming.");
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = "Confirm";
-      return;
-    }
-
     try {
-      const response = await fetch("https://nicketbackend.onrender.com/submit", {
+      const response = await fetch(`${BACKEND_URL}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, phone, eventValue, selectedNumbers, totalValue }),
@@ -189,24 +151,14 @@
       const result = await response.json();
 
       if (response.ok) {
-          alert(`✅ Thank you, ${name}! Your registration has been received. A confirmation email has been sent to ${email}.`);
-        confirmOverlay.style.display = "none";
-        selectedNumbers = [];
-        updateTotals();
-        grid.querySelectorAll('button.winGameBtn').forEach(btn => {
-          btn.style.background = '#fff';
-          btn.style.color = '#1e293b';
-          btn.style.borderColor = '#cbd5e1';
-          const badge = btn.querySelector('span');
-          badge.style.display = 'none';
-          badge.textContent = '';
-        });
+        overlay.style.display = "none";
+        clearForm();
+        showToast(`✅ Thanks, ${name}! Confirmation sent to ${email}.`);
       } else {
-        alert(`❌ Error: ${result.message || "Failed to send data"}`);
+        showToast(`❌ ${result.message || "Failed to send email."}`, false);
       }
-    } catch (error) {
-      console.error("Submission error:", error);
-      alert("⚠️ Failed to connect to the server. Please try again later.");
+    } catch (err) {
+      showToast("⚠️ Could not connect to server.", false);
     }
 
     confirmBtn.disabled = false;
