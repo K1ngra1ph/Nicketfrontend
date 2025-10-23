@@ -94,40 +94,91 @@
 
 <script>
   const BACKEND_URL = "https://nicketbackend.onrender.com";
+  const overlay = document.getElementById('winGameOverlay');
+  const openBtn = document.getElementById('openWinGame');
+  const closeBtn = document.getElementById('closeWinGame');
+  const grid = document.getElementById('winGameGrid');
+  const totalEl = document.getElementById('winGameTotal');
+  const submitBtnGame = document.getElementById('submitWinGame');
+  const clearBtn = document.getElementById('clearWinGame');
+  const selectedDisplay = document.getElementById('selectedDisplay');
   const pricePerNumber = 1000;
   let selectedNumbers = [];
 
-  const overlay = document.getElementById('confirmOverlay');
+  openBtn.onclick = () => overlay.style.display = 'block';
+  closeBtn.onclick = () => overlay.style.display = 'none';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.style.display = 'none'; };
+
+  // ✅ Generate 1–100 number buttons dynamically
+  for (let i = 1; i <= 100; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.className = 'winGameBtn';
+    btn.style.cssText = "width:50px; height:50px; border:2px solid #cbd5e1; border-radius:8px; background:#fff; cursor:pointer; font-weight:600; transition:all 0.2s; position:relative;";
+    
+    const badge = document.createElement('span');
+    badge.style.cssText = "position:absolute; bottom:4px; right:6px; font-size:10px; background:#ef4444; color:white; border-radius:50%; padding:2px 5px; display:none;";
+    btn.appendChild(badge);
+
+    btn.onclick = () => {
+      selectedNumbers.push(i);
+      badge.textContent = selectedNumbers.filter(n => n === i).length;
+      badge.style.display = 'inline';
+      btn.style.background = '#ef4444';
+      btn.style.color = 'white';
+      btn.style.borderColor = '#ef4444';
+      updateTotals();
+    };
+    grid.appendChild(btn);
+  }
+
+  // ✅ Update totals and selection display
+  function updateTotals() {
+    totalEl.textContent = selectedNumbers.length * pricePerNumber;
+    selectedDisplay.textContent = selectedNumbers.length === 0 
+      ? "No numbers selected yet." 
+      : "Selected Numbers: " + selectedNumbers.join(", ");
+  }
+
+  // ✅ Clear number selections
+  clearBtn.onclick = () => resetSelections();
+
+  function resetSelections() {
+    selectedNumbers = [];
+    updateTotals();
+    grid.querySelectorAll('button.winGameBtn').forEach(btn => {
+      btn.style.background = '#fff';
+      btn.style.color = '#1e293b';
+      btn.style.borderColor = '#cbd5e1';
+      const badge = btn.querySelector('span');
+      badge.style.display = 'none';
+      badge.textContent = '';
+    });
+  }
+
+  // ✅ Close overlay when user finishes selecting numbers
+  submitBtnGame.onclick = () => {
+    if (selectedNumbers.length === 0) return alert('Please select at least one number.');
+    overlay.style.display = 'none';
+  };
+
+  // ==============================
+  // ✅ Confirmation Overlay Logic
+  // ==============================
+  const submitBtn = document.getElementById('submitBtn');
+  const confirmOverlay = document.getElementById('confirmOverlay');
+  const confirmText = document.getElementById('confirmText');
   const confirmBtn = document.getElementById('confirmBtn');
   const cancelBtn = document.getElementById('cancelBtn');
-  const confirmText = document.getElementById('confirmText');
-  const submitBtn = document.getElementById('submitBtn');
-  const toast = document.getElementById("toast");
 
-  function showToast(message, success = true) {
-    toast.textContent = message;
-    toast.style.backgroundColor = success ? "#16a34a" : "#ef4444";
-    toast.className = "show";
-    setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
-  }
-
-  function clearForm() {
-    document.getElementById('name').value = "";
-    document.getElementById('email').value = "";
-    document.getElementById('phone').value = "";
-    document.getElementById('event').value = "";
-    selectedNumbers = [];
-    document.getElementById("selectedDisplay").textContent = "No numbers selected yet.";
-  }
-
-  submitBtn.addEventListener("click", () => {
+  submitBtn.addEventListener('click', () => {
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const eventValue = document.getElementById('event').value.trim();
 
     if (!name || !email || !phone || !eventValue || selectedNumbers.length === 0) {
-      showToast("⚠️ Please fill all fields and select numbers.", false);
+      alert('⚠️ Please fill in all required fields and select numbers.');
       return;
     }
 
@@ -137,18 +188,21 @@
       <strong>Phone:</strong> ${phone}<br>
       <strong>Event:</strong> ${eventValue}<br>
       <strong>Selected Numbers:</strong> ${selectedNumbers.join(", ")}<br>
-      <strong>Total:</strong> ₦${(selectedNumbers.length * pricePerNumber).toLocaleString()}<br><br>
-      Please confirm all details are correct.
+      <strong>Total Value:</strong> ₦${(selectedNumbers.length * pricePerNumber).toLocaleString()}<br><br>
+      Please confirm that all the information above is correct.
     `;
-    overlay.style.display = "flex";
+    confirmOverlay.style.display = 'flex';
   });
 
-  cancelBtn.onclick = () => overlay.style.display = "none";
-  overlay.onclick = (e) => { if (e.target === overlay) overlay.style.display = "none"; };
+  cancelBtn.onclick = () => confirmOverlay.style.display = 'none';
+  confirmOverlay.onclick = (e) => { if (e.target === confirmOverlay) confirmOverlay.style.display = 'none'; };
 
+  // ==================================
+  // ✅ Confirm & Submit Data to Backend
+  // ==================================
   confirmBtn.addEventListener("click", async () => {
     confirmBtn.disabled = true;
-    confirmBtn.textContent = "Sending...";
+    confirmBtn.textContent = "Processing...";
 
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -166,14 +220,24 @@
       const result = await response.json();
 
       if (response.ok) {
-        overlay.style.display = "none";
-        clearForm();
-        showToast(`✅ Thanks, ${name}! Confirmation sent to ${email}.`);
+        alert(`✅ Thank you, ${name}! Your registration has been received. A confirmation email has been sent to ${email}.`);
+
+        // ✅ Clear everything after success
+        document.getElementById('name').value = "";
+        document.getElementById('email').value = "";
+        document.getElementById('phone').value = "";
+        document.getElementById('event').value = "";
+        resetSelections();
+        confirmOverlay.style.display = "none";
+
+        // 💡 Pro Tip: Always confirm network success before UI reset.
+        console.log("🎯 Registration successful — all fields cleared, UI ready for next submission.");
       } else {
-        showToast(`❌ ${result.message || "Failed to send email."}`, false);
+        alert(`❌ Error: ${result.message || "Failed to send data"}`);
       }
-    } catch (err) {
-      showToast("⚠️ Could not connect to server.", false);
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("⚠️ Failed to connect to the server. Please try again later.");
     }
 
     confirmBtn.disabled = false;
