@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://js.paystack.co/v1/inline.js"></script>
   <title>Event Registration</title>
   <style>
     body { font-family: 'Poppins', sans-serif; background: #f9fafb; padding: 20px; }
@@ -165,66 +166,90 @@
   cancelBtn.onclick = () => confirmOverlay.style.display = 'none';
   confirmOverlay.onclick = (e) => { if (e.target === confirmOverlay) confirmOverlay.style.display = 'none'; };
 
-  // ✅ Confirm button functionality (with disable)
-  confirmBtn.addEventListener("click", async () => {
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = "Processing...";
+  // ✅ Confirm button functionality (with Paystack and form reset)
+confirmBtn.addEventListener("click", async () => {
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = "Processing...";
 
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const eventValue = document.getElementById('event').value.trim();
-    const totalValue = selectedNumbers.length * pricePerNumber;
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const eventValue = document.getElementById('event').value.trim();
+  const totalValue = selectedNumbers.length * pricePerNumber;
 
-    window.selectedNumbers = selectedNumbers;
+  window.selectedNumbers = selectedNumbers;
 
-    if (!name || !email || !phone || !eventValue || selectedNumbers.length === 0) {
-      alert("Please fill in all fields and select your numbers before confirming.");
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = "Confirm";
-      return;
-    }
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, eventValue, selectedNumbers, totalValue }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        alert(`✅ ${result.message || "Submission successful!"}`);
-        confirmOverlay.style.display = "none";
-        selectedNumbers = [];
-        window.selectedNumbers = [];
-        updateTotals();
-        grid.querySelectorAll('button.winGameBtn').forEach(btn => {
-          btn.style.background = '#fff';
-          btn.style.color = '#1e293b';
-          btn.style.borderColor = '#cbd5e1';
-          const badge = btn.querySelector('span');
-          badge.style.display = 'none';
-          badge.textContent = '';
-        });
-        
-        //✅ Clear form fields after successful submission 
-        document.getElementById('name').value = '';
-        document.getElementById('email').value = '';
-        document.getElementById('phone').value = '';
-        document.getElementById('event').value = '';
-      } else {
-        alert(`❌ Error: ${result.message || "Failed to send data"}`);
-      }
-    } catch (error) {
-      console.error("Submission error:", error);
-      alert("⚠️ Failed to connect to the server. Please try again later.");
-    }
-
+  if (!name || !email || !phone || !eventValue || selectedNumbers.length === 0) {
+    alert("Please fill in all fields and select your numbers before confirming.");
     confirmBtn.disabled = false;
     confirmBtn.textContent = "Confirm";
+    return;
+  }
+
+  // ✅ Trigger Paystack Payment
+  const handler = PaystackPop.setup({
+    key: "pk_test_6cd1953a80a34b668db8548e28a8ca501865ccbf",
+    email: email,
+    amount: totalValue * 100, // Paystack expects kobo
+    currency: "NGN",
+    ref: "NICKET-" + Math.floor((Math.random() * 1000000000) + 1), // FIXED: missing '+'
+    
+    callback: async function (response) {
+      console.log("✅ Payment Successful:", response);
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, phone, eventValue, selectedNumbers, totalValue }),
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          alert(`✅ ${result.message || "Submission successful!"}`);
+          confirmOverlay.style.display = "none";
+
+          // ✅ Reset numbers
+          selectedNumbers = [];
+          window.selectedNumbers = [];
+          updateTotals();
+
+          grid.querySelectorAll('button.winGameBtn').forEach(btn => {
+            btn.style.background = '#fff';
+            btn.style.color = '#1e293b';
+            btn.style.borderColor = '#cbd5e1';
+            const badge = btn.querySelector('span');
+            badge.style.display = 'none';
+            badge.textContent = '';
+          });
+
+          // ✅ Clear form fields
+          document.getElementById('name').value = '';
+          document.getElementById('email').value = '';
+          document.getElementById('phone').value = '';
+          document.getElementById('event').value = '';
+        } else {
+          alert(`❌ Error: ${result.message || "Failed to send data"}`);
+        }
+      } catch (error) {
+        console.error("Submission error:", error);
+        alert("⚠️ Failed to connect to the server. Please try again later.");
+      }
+
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Confirm";
+    },
+
+    onClose: function () {
+      alert("Payment cancelled.");
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Confirm";
+    },
   });
+
+  handler.openIframe();
+});
 </script>
 
 </body>
