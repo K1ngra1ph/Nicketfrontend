@@ -176,7 +176,6 @@ confirmBtn.addEventListener("click", async () => {
   const phone = document.getElementById('phone').value.trim();
   const eventValue = document.getElementById('event').value.trim();
   const totalValue = selectedNumbers.length * pricePerNumber;
-
   window.selectedNumbers = selectedNumbers;
 
   if (!name || !email || !phone || !eventValue || selectedNumbers.length === 0) {
@@ -190,9 +189,9 @@ confirmBtn.addEventListener("click", async () => {
   const handler = PaystackPop.setup({
     key: "pk_test_6cd1953a80a34b668db8548e28a8ca501865ccbf",
     email: email,
-    amount: totalValue * 100, // Paystack expects kobo
+    amount: totalValue * 100,
     currency: "NGN",
-    ref: "NICKET-" + Math.floor((Math.random() * 1000000000) + 1), // FIXED: missing '+'
+    ref: "NICKET-" + Math.floor((Math.random() * 1000000000) + 1),
     
     callback: async function (response) {
       console.log("✅ Payment Successful:", response);
@@ -201,12 +200,13 @@ confirmBtn.addEventListener("click", async () => {
         const res = await fetch(`${BACKEND_URL}/submit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, phone, eventValue, selectedNumbers, totalValue }),
+          body: JSON.stringify({ name, email, phone, eventValue, selectedNumbers, totalValue,
+          refrence: response.refrence }),
         });
 
-        const result = await res.json();
+        const result = await backendResponse.json();
 
-        if (res.ok) {
+        if (backendResponse.ok) {
           alert(`✅ ${result.message || "Submission successful!"}`);
           confirmOverlay.style.display = "none";
 
