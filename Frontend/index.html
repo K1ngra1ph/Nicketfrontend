@@ -166,7 +166,7 @@
   cancelBtn.onclick = () => confirmOverlay.style.display = 'none';
   confirmOverlay.onclick = (e) => { if (e.target === confirmOverlay) confirmOverlay.style.display = 'none'; };
 
-  // ✅ Confirm button functionality (with Paystack and form reset)
+  //
 confirmBtn.addEventListener("click", async () => {
   confirmBtn.disabled = true;
   confirmBtn.textContent = "Processing...";
@@ -193,20 +193,20 @@ confirmBtn.addEventListener("click", async () => {
     currency: "NGN",
     ref: "NICKET-" + Math.floor((Math.random() * 1000000000) + 1),
     
-    callback: async function (response) {
-      console.log("✅ Payment Successful:", response);
+    callback: async function (paystackResponse) {
+      console.log("✅ Payment Successful:", paystackResponse);
 
       try {
-        const res = await fetch(`${BACKEND_URL}/submit`, {
+        const serverResponse = await fetch(`${BACKEND_URL}/submit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, phone, eventValue, selectedNumbers, totalValue,
-          refrence: response.refrence }),
+          reference: paystackResponse.reference }),
         });
 
-        const result = await backendResponse.json();
+        const result = await serverResponse.json();
 
-        if (backendResponse.ok) {
+        if (serverResponse.ok) {
           alert(`✅ ${result.message || "Submission successful!"}`);
           confirmOverlay.style.display = "none";
 
