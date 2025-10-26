@@ -187,7 +187,7 @@ confirmBtn.addEventListener("click", async () => {
 
 // ✅ Trigger Monnify Payment
 MonnifySDK.initialize({
-  amount: totalValue, // amount in Naira
+  amount: totalValue,
   currency: "NGN",
   reference: "NICKET-" + Math.floor((Math.random() * 1000000000) + 1),
   customerFullName: name,
@@ -195,10 +195,8 @@ MonnifySDK.initialize({
   customerPhoneNumber: phone,
   apiKey: "MK_TEST_R4WRNJDRL7",
   contractCode: "8779904402",
-  paymentDescription: `${eventValue} - ${selectedNumbers.length} ticket(s)`,
+  paymentDescription: `Ticket to win a VIP for ${eventValue}`,
   isTestMode: true,
-
-  // ✅ Callback after successful payment
   onComplete: async function (response) {
     console.log("✅ Payment successful:", response);
 
