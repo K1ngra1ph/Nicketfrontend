@@ -192,30 +192,29 @@ MonnifySDK.initialize({
   reference: "NICKET-" + Math.floor((Math.random() * 1000000000) + 1),
   customerFullName: name,
   customerEmail: email,
-  customerMobileNumber: phone,
+  customerPhoneNumber: phone,
   apiKey: "MK_TEST_R4WRNJDRL7",
   contractCode: "8779904402",
   paymentDescription: `Ticket to win a VIP for ${eventValue}`,
   isTestMode: true,
-  
-  onComplete: async function (response) {
-    console.log("✅ Payment successful:", response);
+
+  onComplete: function (response) {
+    console.log("✅ Payment completed:", response);
 
     if (response.paymentReference) {
       fetch(`${BACKEND_URL}/submit`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            email,
-            phone,
-            eventValue,
-            selectedNumbers,
-            totalValue,
-            reference: response.paymentReference,
-          }),
-        });
-
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          phone: phone,
+          eventValue: eventValue,
+          selectedNumbers: selectedNumbers,
+          totalValue: totalValue,
+          reference: response.paymentReference
+        }),
+      })
         .then(res => res.json())
         .then(result => {
           if (result && result.message) {
