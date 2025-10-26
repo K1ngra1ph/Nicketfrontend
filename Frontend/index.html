@@ -197,12 +197,12 @@ MonnifySDK.initialize({
   contractCode: "8779904402",
   paymentDescription: `Ticket to win a VIP for ${eventValue}`,
   isTestMode: true,
+  
   onComplete: async function (response) {
     console.log("✅ Payment successful:", response);
 
     if (response.paymentReference) {
-      try {
-        const serverResponse = await fetch(`${BACKEND_URL}/submit`, {
+      fetch(`${BACKEND_URL}/submit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -216,11 +216,17 @@ MonnifySDK.initialize({
           }),
         });
 
-        const result = await serverResponse.json();
+       .then(res => res.json())
+        .then(result => {
+          if (result && result.message) {
+            alert(`✅ ${result.message}`);
+          } else {
+            alert("✅ Payment successful, but server did not return a message.");
+          }
 
-        if (serverResponse.ok) {
-          alert(`✅ ${result.message || "Submission successful!"}`);
           confirmOverlay.style.display = "none";
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = "Confirm";
 
           // Reset selections and form
           selectedNumbers = [];
