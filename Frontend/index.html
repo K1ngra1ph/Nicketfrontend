@@ -227,10 +227,14 @@ MonnifySDK.initialize({
           confirmBtn.disabled = false;
           confirmBtn.textContent = "Confirm";
 
-          // Reset selections and form
+          // Reset everything
           selectedNumbers = [];
           window.selectedNumbers = [];
           updateTotals();
+          document.getElementById('name').value = '';
+          document.getElementById('email').value = '';
+          document.getElementById('phone').value = '';
+          document.getElementById('event').value = '';
 
           grid.querySelectorAll('button.winGameBtn').forEach(btn => {
             btn.style.background = '#fff';
@@ -240,32 +244,23 @@ MonnifySDK.initialize({
             badge.style.display = 'none';
             badge.textContent = '';
           });
-
-          document.getElementById('name').value = '';
-          document.getElementById('email').value = '';
-          document.getElementById('phone').value = '';
-          document.getElementById('event').value = '';
-        } else {
-          alert(`❌ Error: ${result.message || "Failed to send data"}`);
-        }
-      } catch (error) {
-        console.error("Submission error:", error);
-        alert("⚠️ Failed to connect to the server. Please try again later.");
-      }
+        })
+        .catch(err => {
+          console.error("❌ Server submission error:", err);
+          alert("⚠️ Payment went through but backend submission failed.");
+        });
     } else {
       alert("❌ Payment not completed.");
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Confirm";
     }
-
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = "Confirm";
   },
 
-  // ❌ If payment is closed/cancelled
   onClose: function () {
-    alert("Payment cancelled.");
+    alert("Payment was cancelled by the user.");
     confirmBtn.disabled = false;
     confirmBtn.textContent = "Confirm";
-  },
+  }
 });
   
 });
