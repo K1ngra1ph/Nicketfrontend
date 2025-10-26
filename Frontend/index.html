@@ -216,7 +216,7 @@ MonnifySDK.initialize({
           }),
         });
 
-       .then(res => res.json())
+        .then(res => res.json())
         .then(result => {
           if (result && result.message) {
             alert(`✅ ${result.message}`);
