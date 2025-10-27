@@ -185,11 +185,13 @@ confirmBtn.addEventListener("click", async () => {
     return;
   }
 
+  const reference = 'NICKET-' + Date.now();
+
 // ✅ Trigger Monnify Payment
 MonnifySDK.initialize({
   amount: totalValue,
   currency: "NGN",
-  reference: "NICKET-" + Math.floor((Math.random() * 1000000000) + 1),
+  reference: reference,
   customerFullName: name,
   customerEmail: email,
   customerPhoneNumber: phone,
@@ -206,13 +208,13 @@ MonnifySDK.initialize({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          reference,
           name: name,
           email: email,
           phone: phone,
           eventValue: eventValue,
           selectedNumbers: selectedNumbers,
           totalValue: totalValue,
-          reference: response.paymentReference
         }),
       })
         .then(res => res.json())
