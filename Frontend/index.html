@@ -203,9 +203,9 @@ MonnifySDK.initialize({
   onComplete: function (response) {
     console.log("✅ Payment completed:", response);
 
-    if (response.paymentReference && response.paymentStatus === "PAID") {
+    if (response.transactionReference && response.paymentStatus === "PAID") {
       console.log("🧾 Sending payload to backend:", {
-        reference: response.paymentReference,
+        reference: response.transactionReference,
         name,
         email,
         phone,
@@ -218,7 +218,7 @@ MonnifySDK.initialize({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reference: response.paymentReference,
+          reference: response.transactionReference,
           name: name,
           email: email,
           phone: phone,
