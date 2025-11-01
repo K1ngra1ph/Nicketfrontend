@@ -1,35 +1,23 @@
-name: Deploy to Firebase Hosting
+name: Deploy Frontend to Firebase Hosting
 
 on:
   push:
     branches:
-      - Nicketfrontend
+      - main
 
 jobs:
-  build_and_deploy:
+  deploy:
     runs-on: ubuntu-latest
-    name: Build and Deploy to Firebase
+    name: Deploy to Firebase
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
-
-      - name: Build Project
-        run: |
-          npm install
-          # If your project doesn't require a build step (pure HTML/CSS/JS),
-          # you can comment out the next line.
-          npm run build || echo "No build step defined"
 
       - name: Deploy to Firebase
         run: firebase deploy --only hosting --project nicketvip
         env:
           FIREBASE_SERVICE_ACCOUNT_NICKETVIP: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NICKETVIP }}
-          PROJECT_ID: nicketvip
