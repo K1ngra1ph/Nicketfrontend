@@ -71,10 +71,12 @@
   <label>Select Event</label>
   <select id="event" required>
     <option value="">-- Choose Event --</option>
-    <option value="Soakers">Soakers</option>
-    <option value="Monochrome">Monochrome</option>
-    <option value="Vibe The Fest">Vibe The Fest</option>
+    <option value="Soakers" data-location="Tafawa Balewa Square, Lagos" data-date="Dec 15, 2025">Soakers</option>
+    <option value="Monochrome" data-location="The Palms, Victoria Island" data-date="Dec 8, 2025">Monochrome</option>
+    <option value="Vibe The Fest" >Vibe The Fest</option>
   </select>
+  <div id="eventDetails" style="margin-top:10px; color:#1e293b; font-size:15px; line-height:1.5;">   <!-- event info will appear here -->
+</div>
 
   <div style="text-align:center; margin-top:20px;">
     <button id="openWinGame" style="background:#ef4444; color:white; border:none; border-radius:8px; padding:10px 20px; font-size:16px; cursor:pointer; font-weight:600;">WIN THE GAME</button>
@@ -126,6 +128,24 @@
 </div>
 
 <script>
+const eventSelect = document.getElementById("event");
+const eventDetails = document.getElementById("eventDetails");
+
+eventSelect.addEventListener("change", () => {
+  const selectedOption = eventSelect.options[eventSelect.selectedIndex];
+  const location = selectedOption.getAttribute("data-location");
+  const date = selectedOption.getAttribute("data-date");
+
+  if (eventSelect.value && location && date) {
+    eventDetails.innerHTML = `
+      <strong>📍 Location:</strong> ${location}<br>
+      <strong>📅 Date:</strong> ${date}
+    `;
+  } else {
+    eventDetails.innerHTML = "";
+  }
+});
+
 const feedbackModal = document.getElementById('feedbackModal');
 const modalTitle = document.getElementById('modalTitle');
 const modalMessage = document.getElementById('modalMessage');
